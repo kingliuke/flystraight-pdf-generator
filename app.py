@@ -30,18 +30,24 @@ def generate_pdf():
         "client_name": "Javier"
     }
     """
-    try:
-        # Get request data
+ try:
+    # Check content type
+    content_type = request.headers.get('Content-Type', '')
+    
+    # Handle text/plain
+    if 'text/plain' in content_type:
+        markdown_content = request.get_data(as_text=True)
+        client_name = request.headers.get('X-Client-Name', 'Client')
+    # Handle JSON
+    elif request.is_json or 'application/json' in content_type:
         data = request.get_json()
-        
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-        
         markdown_content = data.get('markdown_content')
         client_name = data.get('client_name', 'Client')
-        
-        if not markdown_content:
-            return jsonify({"error": "markdown_content is required"}), 400
+    else:
+        return jsonify({"error": "Unsupported Content-Type. Use 'text/plain' or 'application/json'"}), 415
+    
+    if not markdown_content:
+        return jsonify({"error": "No content provided"}), 400
         
         # Generate PDF
         print(f"Generating PDF for {client_name}...")
